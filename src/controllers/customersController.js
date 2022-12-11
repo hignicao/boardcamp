@@ -6,7 +6,9 @@ export async function getCustomers(req, res) {
   try {
     if (search) {
       const customers = await connectionDB.query(
-        `SELECT * FROM customers WHERE cpf ILIKE $1;`,
+        `SELECT id, name, phone, cpf, TO_CHAR(birthday, 'yyyy-mm-dd') AS "birthday"
+        FROM customers
+        WHERE cpf ILIKE $1;`,
         [`${search}%`]
       );
       res.send(customers.rows);
@@ -14,7 +16,8 @@ export async function getCustomers(req, res) {
     }
 
     const customers = await connectionDB.query(
-      `SELECT * FROM customers;`
+      `SELECT id, name, phone, cpf, TO_CHAR(birthday, 'yyyy-mm-dd') AS "birthday"
+      FROM customers;`
     );
     res.send(customers.rows);
   } catch (error) {
@@ -53,7 +56,8 @@ export async function updateCustomer(req, res) {
 
   try {
     await connectionDB.query(
-      `UPDATE customers SET name = $1, phone = $2, cpf = $3, birthday = $4
+      `UPDATE customers
+      SET name = $1, phone = $2, cpf = $3, birthday = $4
       WHERE id = $5;`,
       [name, phone, cpf, birthday, id]
     );
