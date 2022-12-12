@@ -1,4 +1,5 @@
 import { connectionDB } from "../database/db.js";
+import { compareAsc, addDays, differenceInDays } from 'date-fns'
 
 export async function getRentals(req, res) {
   const searchByCustomer = req.query.customerId;
@@ -101,7 +102,32 @@ export async function createRental(req, res) {
 }
 
 export async function returnRental(req, res) {
+  const { id } = req.params;
+  const rental = res.locals.rental;
+  let delayFee = null;
 
+  const expectedReturnDate = addDays(rental.rentDate, rental.daysRented);
+  const delayDays = differenceInDays(new Date(), expectedReturnDate);
+
+  if (delayDays > 0) {
+    delayFee = delayDays * rental.originalPrice/rental.daysRented;
+  }
+
+  try {
+    await connectionDB.query(
+      `UPDATE
+        rentals
+      SET
+        "returnDate" = NOW(),
+        "delayFee" = $1
+      WHERE
+        id = $2;`,
+      [delayFee, id]
+    );
+    res.sendStatus(200);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
 }
 
 export async function deleteRental(req, res) {
